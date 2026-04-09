@@ -1,0 +1,138 @@
+version: "3.8"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# SmartKoszyka Microservices — Local Development Compose
+#
+# Usage:
+#   docker-compose up -d              # start everything
+#   docker-compose up -d db           # start only the database
+#   docker-compose logs -f <service>  # tail logs
+#   docker-compose down -v            # stop + delete volumes
+#
+# Environment:
+#   Copy .env.example → .env and fill in secrets before starting.
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Infrastructure ───
+
+  db:
+    image: postgres:15-alpine
+    container_name: sk-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_NAME:-smartkoszyka}
+      POSTGRES_USER:     ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sk-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Future microservices (uncomment when each service is implemented) ────────
+
+  # auth-service:
+  #   image: smartkoszyka/auth-service:latest
+  #   container_name: sk-auth
+  #   restart: unless-stopped
+  #   build:
+  #     context: services/auth-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8081:8081"
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE:   prod
+  #     SPRING_DATASOURCE_URL:    jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
+  #     DB_USERNAME:              ${DB_USERNAME:-postgres}
+  #     DB_PASSWORD:              ${DB_PASSWORD}
+  #     JWT_SECRET_KEY:           ${JWT_SECRET_KEY}
+  #   networks:
+  #     - sk-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 60s
+
+  # product-service:
+  #   image: smartkoszyka/product-service:latest
+  #   container_name: sk-product
+  #   restart: unless-stopped
+  #   build:
+  #     context: services/product-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8082:8082"
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: prod
+  #     SPRING_DATASOURCE_URL:  jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
+  #     DB_USERNAME:            ${DB_USERNAME:-postgres}
+  #     DB_PASSWORD:            ${DB_PASSWORD}
+  #     JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
+  #   networks:
+  #     - sk-network
+
+  # shopping-list-service:
+  #   image: smartkoszyka/shopping-list-service:latest
+  #   container_name: sk-shopping-list
+  #   restart: unless-stopped
+  #   build:
+  #     context: services/shopping-list-service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8083:8083"
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: prod
+  #     SPRING_DATASOURCE_URL:  jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
+  #     DB_USERNAME:            ${DB_USERNAME:-postgres}
+  #     DB_PASSWORD:            ${DB_PASSWORD}
+  #     JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
+  #   networks:
+  #     - sk-network
+
+  # api-gateway:
+  #   image: smartkoszyka/api-gateway:latest
+  #   container_name: sk-gateway
+  #   restart: unless-stopped
+  #   build:
+  #     context: services/api-gateway
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8080:8080"    # single public entry point
+  #   depends_on:
+  #     - auth-service
+  #     - product-service
+  #     - shopping-list-service
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: prod
+  #     JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
+  #   networks:
+  #     - sk-network
+
+# ── Volumes ──
+volumes:
+  postgres_data:
+    driver: local
+
+# ── Networks ──
+networks:
+  sk-network:
+    driver: bridge
