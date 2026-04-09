@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Global SpotBugs exclusions for all SmartKoszyka microservice modules.
+  Add module-specific exclusions in each service's own spotbugs-exclude.xml
+  and reference it via <excludeFilterFile> in that module's pom.xml.
+-->
+<FindBugsFilter>
+
+    <!-- JPA entities expose their collections to Hibernate on purpose -->
+    <Match>
+        <Class name="~.*\.domain\.model\..*"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Spring Security config beans require constructor-injected mutable fields -->
+    <Match>
+        <Class name="~.*\.config\..*"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- ErrorResponse intentionally guards getMessage() with a defensive copy -->
+    <Match>
+        <Class name="com.github.mpalambonisi.common.exception.ErrorResponse"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+</FindBugsFilter>

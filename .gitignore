@@ -1,0 +1,54 @@
+# ── Build output ──────────────────────────────────────────────────────────────
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# ── Maven wrapper jar (downloaded on demand) ──────────────────────────────────
+.mvn/wrapper/maven-wrapper.jar
+
+# ── Secrets / environment ─────────────────────────────────────────────────────
+.env
+!.env.example
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Node (commitlint) ─────────────────────────────────────────────────────────
+node_modules/
+package-lock.json
+yarn.lock
+
+# ── Docker local overrides ────────────────────────────────────────────────────
+docker-compose.local.yml
+docker-compose.override.yml
+
+# ── Quality reports (generated artefacts, not source) ────────────────────────
+**/target/site/
+**/target/spotbugs/
+**/target/pmd/
+**/target/checkstyle-result.xml

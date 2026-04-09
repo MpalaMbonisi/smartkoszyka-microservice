@@ -1,0 +1,90 @@
+repos:
+  # ──────────────────────────────────────────────────────────────────────────
+  # General file hygiene
+  # ──────────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Java formatting — Google Java Format
+  # ──────────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: v2.12.0
+    hooks:
+      - id: pretty-format-java
+        args: [--autofix, --google-java-formatter-version=1.22.0]
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Commit-message lint (local — mirrors CI check for fast feedback)
+  # ──────────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.18.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies:
+          - "@commitlint/config-conventional"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Maven hooks (local scripts)
+  # ──────────────────────────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+
+      # ── PRE-COMMIT (fast — runs on every commit) ────────────────────────
+
+      - id: maven-checkstyle
+        name: Checkstyle
+        entry: scripts/mvnw-java21.sh checkstyle:check
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        verbose: true
+
+      # ── PRE-PUSH (thorough — runs only before push) ─────────────────────
+
+      - id: maven-test
+        name: Unit Tests
+        entry: bash -c 'set -a; [ -f .env ] && source .env; set +a;
+                        export JAVA_HOME=$(scripts/find-java21.sh);
+                        ./mvnw clean test'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+      - id: maven-jacoco
+        name: JaCoCo Coverage Gate
+        entry: bash -c 'export JAVA_HOME=$(scripts/find-java21.sh);
+                        ./mvnw jacoco:check'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+      - id: maven-spotbugs
+        name: SpotBugs
+        entry: bash -c 'export JAVA_HOME=$(scripts/find-java21.sh);
+                        ./mvnw spotbugs:check -P quality'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
+
+      - id: maven-pmd
+        name: PMD Static Analysis
+        entry: bash -c 'export JAVA_HOME=$(scripts/find-java21.sh);
+                        ./mvnw pmd:check -P quality'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
