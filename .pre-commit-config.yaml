@@ -22,6 +22,8 @@ repos:
     hooks:
       - id: pretty-format-java
         args: [--autofix, --google-java-formatter-version=1.22.0]
+        additional_dependencies:
+          - setuptools<82.0.0
 
   # ──────────────────────────────────────────────────────────────────────────
   # Commit-message lint (local — mirrors CI check for fast feedback)
