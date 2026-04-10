@@ -21,9 +21,9 @@
   <!-- ──────────── Modules ─────────────── -->
   <modules>
     <module>shared/common-lib</module>
+    <module>services/auth-service</module>
+    <module>services/product-service</module>
     <!-- future modules:
-        <module>services/auth-service</module>
-        <module>services/product-service</module>
         <module>services/shopping-list-service</module>
         <module>services/api-gateway</module>
         -->

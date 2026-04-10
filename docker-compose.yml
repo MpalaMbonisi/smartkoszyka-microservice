@@ -37,55 +37,53 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Future microservices (uncomment when each service is implemented) ────────
+  auth-service:
+    image: smartkoszyka/auth-service:latest
+    container_name: sk-auth
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE:   prod
+      SPRING_DATASOURCE_URL:    jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
+      DB_USERNAME:              ${DB_USERNAME:-postgres}
+      DB_PASSWORD:              ${DB_PASSWORD}
+      JWT_SECRET_KEY:           ${JWT_SECRET_KEY}
+    networks:
+      - sk-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
-  # auth-service:
-  #   image: smartkoszyka/auth-service:latest
-  #   container_name: sk-auth
-  #   restart: unless-stopped
-  #   build:
-  #     context: services/auth-service
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8081:8081"
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   environment:
-  #     SPRING_PROFILES_ACTIVE:   prod
-  #     SPRING_DATASOURCE_URL:    jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
-  #     DB_USERNAME:              ${DB_USERNAME:-postgres}
-  #     DB_PASSWORD:              ${DB_PASSWORD}
-  #     JWT_SECRET_KEY:           ${JWT_SECRET_KEY}
-  #   networks:
-  #     - sk-network
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 60s
-
-  # product-service:
-  #   image: smartkoszyka/product-service:latest
-  #   container_name: sk-product
-  #   restart: unless-stopped
-  #   build:
-  #     context: services/product-service
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8082:8082"
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   environment:
-  #     SPRING_PROFILES_ACTIVE: prod
-  #     SPRING_DATASOURCE_URL:  jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
-  #     DB_USERNAME:            ${DB_USERNAME:-postgres}
-  #     DB_PASSWORD:            ${DB_PASSWORD}
-  #     JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
-  #   networks:
-  #     - sk-network
+  product-service:
+    image: smartkoszyka/product-service:latest
+    container_name: sk-product
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+    ports:
+      - "8082:8082"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL:  jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
+      DB_USERNAME:            ${DB_USERNAME:-postgres}
+      DB_PASSWORD:            ${DB_PASSWORD}
+      JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
+    networks:
+      - sk-network
 
   # shopping-list-service:
   #   image: smartkoszyka/shopping-list-service:latest
