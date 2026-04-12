@@ -61,6 +61,7 @@ fi
 
 SERVICE_NAME="$1"
 PORT="${2:-}"
+MANAGEMENT_PORT=""$((PORT + 100))"  # e.g. 8081 → 8181 for management/actuator
 
 # ── Validate service name ─────────────────────────────────────────────────────
 if [[ ! "$SERVICE_NAME" =~ ^[a-z][a-z0-9-]*-service$ ]]; then
@@ -132,6 +133,7 @@ substitute() {
     -e "s|{{MAIN_CLASS_NAME}}|${MAIN_CLASS_NAME}|g" \
     -e "s|{{PORT}}|${PORT}|g" \
     -e "s|{{PASCAL_NAME}}|${PASCAL_NAME}|g" \
+    -e "s|{{MANAGEMENT_PORT}}|${MANAGEMENT_PORT}|g" \
     "$file"
 }
 
@@ -201,9 +203,10 @@ import org.springframework.context.annotation.ComponentScan;
 
 /** Entry point for the ${SERVICE_NAME}. */
 @SpringBootApplication
-@ComponentScan(basePackages = {
+@ComponentScan(
+  basePackages = {
     "${JAVA_PACKAGE}",
-    "com.github.mpalambonisi.common"   // picks up common-lib beans
+    "com.github.mpalambonisi.service"   // picks up common-lib beans
 })
 public class ${MAIN_CLASS_NAME} {
 
@@ -270,4 +273,14 @@ echo -e "     Uncomment the '${SERVICE_NAME}' block (or add a new one)."
 echo ""
 echo -e "  3. Build and verify:"
 echo -e "     ${CYAN}./mvnw clean verify -pl services/${SERVICE_NAME} -am${RESET}"
+echo ""
+echo ""
+echo -e "  4. Update prometheus.yml:"
+echo -e "     - job_name: '${SERVICE_NAME}'"
+echo -e "       static_configs:"
+echo -e "         - targets: ['${SERVICE_NAME}:${MANAGEMENT_PORT}']"
+echo ""
+echo -e "  5. Expose the management port in ${BOLD}docker-compose.yml${RESET}:"
+echo -e "     Add the management port to the '${SERVICE_NAME}' service block."
+echo -e "     ${CYAN}     - \"${MANAGEMENT_PORT}:${MANAGEMENT_PORT}\"${RESET}"
 echo ""
