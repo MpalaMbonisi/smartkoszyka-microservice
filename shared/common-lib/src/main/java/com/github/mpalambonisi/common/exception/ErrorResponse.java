@@ -1,4 +1,4 @@
-package com.github.mpalambonisi.exception;
+package com.github.mpalambonisi.common.exception;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;

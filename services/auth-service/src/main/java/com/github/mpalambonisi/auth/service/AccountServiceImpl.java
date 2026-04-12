@@ -2,8 +2,8 @@ package com.github.mpalambonisi.auth.service;
 
 import com.github.mpalambonisi.auth.model.Account;
 import com.github.mpalambonisi.auth.repository.AccountRepository;
-import com.github.mpalambonisi.exception.EmailAlreadyExistsException;
-import com.github.mpalambonisi.exception.ResourceNotFoundException;
+import com.github.mpalambonisi.common.exception.EmailAlreadyExistsException;
+import com.github.mpalambonisi.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

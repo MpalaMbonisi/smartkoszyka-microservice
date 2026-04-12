@@ -1,7 +1,7 @@
 package com.github.mpalambonisi.auth.controller;
 
 import com.github.mpalambonisi.auth.service.AccountService;
-import com.github.mpalambonisi.dto.request.DeleteAccountRequest;
+import com.github.mpalambonisi.common.dto.request.DeleteAccountRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

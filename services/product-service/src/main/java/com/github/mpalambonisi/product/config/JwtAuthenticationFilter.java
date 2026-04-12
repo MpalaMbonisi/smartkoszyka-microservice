@@ -1,6 +1,6 @@
 package com.github.mpalambonisi.product.config;
 
-import com.github.mpalambonisi.service.JwtService;
+import com.github.mpalambonisi.common.service.JwtService;
 import io.micrometer.common.lang.NonNull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

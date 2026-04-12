@@ -1,7 +1,7 @@
 package com.github.mpalambonisi.auth.config;
 
 import com.github.mpalambonisi.auth.service.AccountDetailsServiceImpl;
-import com.github.mpalambonisi.service.JwtService;
+import com.github.mpalambonisi.common.service.JwtService;
 import io.micrometer.common.lang.NonNull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

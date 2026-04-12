@@ -1,4 +1,4 @@
-package com.github.mpalambonisi.exception;
+package com.github.mpalambonisi.common.exception;
 
 /**
  * Thrown when a requested resource (account, product, list …) cannot be found. Maps to HTTP 404 Not

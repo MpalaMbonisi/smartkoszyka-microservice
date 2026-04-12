@@ -1,4 +1,4 @@
-package com.github.mpalambonisi.dto.request;
+package com.github.mpalambonisi.common.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

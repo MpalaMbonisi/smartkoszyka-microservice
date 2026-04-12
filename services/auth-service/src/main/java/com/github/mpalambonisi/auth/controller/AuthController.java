@@ -2,10 +2,10 @@ package com.github.mpalambonisi.auth.controller;
 
 import com.github.mpalambonisi.auth.model.Account;
 import com.github.mpalambonisi.auth.service.AccountService;
-import com.github.mpalambonisi.dto.request.AccountRegistrationRequest;
-import com.github.mpalambonisi.dto.request.LoginRequest;
-import com.github.mpalambonisi.dto.response.AuthResponse;
-import com.github.mpalambonisi.service.JwtService;
+import com.github.mpalambonisi.common.dto.request.AccountRegistrationRequest;
+import com.github.mpalambonisi.common.dto.request.LoginRequest;
+import com.github.mpalambonisi.common.dto.response.AuthResponse;
+import com.github.mpalambonisi.common.service.JwtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

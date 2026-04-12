@@ -1,4 +1,4 @@
-package com.github.mpalambonisi.service;
+package com.github.mpalambonisi.common.service;
 
 import io.jsonwebtoken.Claims;
 import java.util.function.Function;

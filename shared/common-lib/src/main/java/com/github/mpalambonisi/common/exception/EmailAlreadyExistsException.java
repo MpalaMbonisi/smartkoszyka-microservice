@@ -1,4 +1,4 @@
-package com.github.mpalambonisi.exception;
+package com.github.mpalambonisi.common.exception;
 
 /**
  * Thrown when a registration attempt uses an e-mail address that already exists in the system. Maps

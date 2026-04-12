@@ -1,4 +1,4 @@
-package com.github.mpalambonisi.service;
+package com.github.mpalambonisi.common.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtServiceImpl implements JwtService {
 
-  @Value("${jwt.secret.key}")
+  @Value("${jwt.secret.key:default_secret_key_for_dev_only_1234567890}")
   private String secretKey;
 
   @Value("${jwt.expiration.ms:3600000}")

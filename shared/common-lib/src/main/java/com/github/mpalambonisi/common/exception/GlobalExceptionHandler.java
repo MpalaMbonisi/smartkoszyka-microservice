@@ -1,4 +1,4 @@
-package com.github.mpalambonisi.exception;
+package com.github.mpalambonisi.common.exception;
 
 import io.micrometer.common.lang.NonNull;
 import java.util.ArrayList;

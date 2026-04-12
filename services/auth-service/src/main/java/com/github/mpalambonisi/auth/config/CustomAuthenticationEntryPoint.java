@@ -1,7 +1,7 @@
 package com.github.mpalambonisi.auth.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.mpalambonisi.exception.ErrorResponse;
+import com.github.mpalambonisi.common.exception.ErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

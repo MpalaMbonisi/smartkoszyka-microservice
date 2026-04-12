@@ -1,4 +1,4 @@
-package com.github.mpalambonisi.dto.response;
+package com.github.mpalambonisi.common.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
