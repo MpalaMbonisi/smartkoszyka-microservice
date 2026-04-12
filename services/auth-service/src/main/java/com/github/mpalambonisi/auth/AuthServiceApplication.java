@@ -6,11 +6,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 /** Entry point for the auth-service. */
 @SpringBootApplication
-@ComponentScan(
-    basePackages = {
-      "com.github.mpalambonisi.auth",
-      "com.github.mpalambonisi.common" // picks up common-lib beans
-    })
+@ComponentScan(basePackages = {"com.github.mpalambonisi.auth", "com.github.mpalambonisi.service"})
 public class AuthServiceApplication {
 
   public static void main(String[] args) {

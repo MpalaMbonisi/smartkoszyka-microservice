@@ -7,10 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 /** Entry point for the product-service. */
 @SpringBootApplication
 @ComponentScan(
-    basePackages = {
-      "com.github.mpalambonisi.product",
-      "com.github.mpalambonisi.common" // picks up common-lib beans
-    })
+    basePackages = {"com.github.mpalambonisi.product", "com.github.mpalambonisi.service"})
 public class ProductServiceApplication {
 
   public static void main(String[] args) {
