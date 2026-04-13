@@ -9,12 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
  * uses GatewayExceptionHandler.
  */
 @SpringBootApplication
-@ComponentScan(
-    basePackages = {"com.github.mpalambonisi.apigateway", "com.github.mpalambonisi.common"},
-    excludeFilters =
-        @ComponentScan.Filter(
-            type = org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE,
-            classes = com.github.mpalambonisi.common.exception.GlobalExceptionHandler.class))
+@ComponentScan(basePackages = {"com.github.mpalambonisi.gateway", "com.github.mpalambonisi.common"})
 public class ApiGatewayApplication {
 
   public static void main(String[] args) {
