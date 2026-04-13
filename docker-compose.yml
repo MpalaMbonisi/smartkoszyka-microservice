@@ -57,7 +57,7 @@ services:
     networks:
       - sk-network
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9081/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -84,6 +84,12 @@ services:
       JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
     networks:
       - sk-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9082/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   prometheus:
     image: prom/prometheus:latest
@@ -114,6 +120,32 @@ services:
     depends_on:
       - prometheus
 
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: sk-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"    # only the gateway is public
+      - "9080:9080"    # management
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    networks:
+      - sk-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   # shopping-list-service:
   #   image: smartkoszyka/shopping-list-service:latest
   #   container_name: sk-shopping-list
@@ -132,26 +164,6 @@ services:
   #     SPRING_DATASOURCE_URL:  jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
   #     DB_USERNAME:            ${DB_USERNAME:-postgres}
   #     DB_PASSWORD:            ${DB_PASSWORD}
-  #     JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
-  #   networks:
-  #     - sk-network
-
-  # api-gateway:
-  #   image: smartkoszyka/api-gateway:latest
-  #   container_name: sk-gateway
-  #   restart: unless-stopped
-  #   build:
-  #     context: services/api-gateway
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8080:8080"    # single public entry point
-  #     - "9080:9080"    # management port for Prometheus
-  #   depends_on:
-  #     - auth-service
-  #     - product-service
-  #     - shopping-list-service
-  #   environment:
-  #     SPRING_PROFILES_ACTIVE: prod
   #     JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
   #   networks:
   #     - sk-network
