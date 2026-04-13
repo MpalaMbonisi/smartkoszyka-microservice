@@ -9,8 +9,7 @@ WORKDIR /workspace
 # Copy root pom + common-lib first for better layer caching
 COPY pom.xml .
 COPY shared/common-lib ./shared/common-lib
-COPY services/product-service ./services/product-service
-COPY services/auth-service ./services/auth-service
+COPY services/ ./services/
 
 # Build only this module (common-lib is compiled as a dependency)
 RUN mvn clean package \
