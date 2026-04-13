@@ -3,21 +3,7 @@
 # scripts/create-service.sh
 #
 # Creates a new Spring Boot microservice module under services/
-# with a consistent structure, templated pom.xml, Dockerfile,
-# application.properties, and a @SpringBootApplication main class.
-#
-# Usage:
-#   ./scripts/create-service.sh <service-name> [port]
-#
-# Examples:
-#   ./scripts/create-service.sh auth-service 8081
-#   ./scripts/create-service.sh product-service 8082
-#   ./scripts/create-service.sh shopping-list-service 8083
-#
-# Naming rules:
-#   - lowercase letters, digits, and hyphens only
-#   - must end in "-service" (enforced to keep module names consistent)
-#   - e.g. "auth-service", "product-service", "shopping-list-service"
+# Usage: ./scripts/create-service.sh <service-name> [port]
 # =============================================================================
 
 set -euo pipefail
@@ -36,7 +22,7 @@ warn()    { echo -e "${YELLOW}  ⚠ $*${RESET}"; }
 error()   { echo -e "${RED}  ✘ $*${RESET}" >&2; }
 die()     { error "$*"; exit 1; }
 
-# ── Locate repo root (works from any subdirectory) ────────────────────────────
+# ── Locate repo root ──────────────────────────────────────────────────────────
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) \
   || die "Not inside a git repository. Please run from within the project."
 cd "$REPO_ROOT"
@@ -49,80 +35,57 @@ if [[ $# -lt 1 ]]; then
   echo ""
   echo -e "${BOLD}Usage:${RESET}  ./scripts/create-service.sh <service-name> [port]"
   echo ""
-  echo "  service-name  lowercase, hyphens allowed, must end in '-service'"
-  echo "  port          optional HTTP port (default: next available from 8081)"
-  echo ""
-  echo "Examples:"
-  echo "  ./scripts/create-service.sh auth-service 8081"
-  echo "  ./scripts/create-service.sh product-service 8082"
+  echo "  service-name  lowercase, hyphens allowed (e.g. 'api-gateway')"
+  echo "  port          optional HTTP port"
   echo ""
   exit 1
 fi
 
 SERVICE_NAME="$1"
 PORT="${2:-}"
-MANAGEMENT_PORT=""$((PORT + 100))"  # e.g. 8081 → 8181 for management/actuator
+MANAGEMENT_PORT="$((PORT + 100))"
 
-# ── Validate service name ─────────────────────────────────────────────────────
-if [[ ! "$SERVICE_NAME" =~ ^[a-z][a-z0-9-]*-service$ ]]; then
+# ── UPDATED: Validate service name (No "-service" requirement) ───────────────
+if [[ ! "$SERVICE_NAME" =~ ^[a-z][a-z0-9-]*$ ]]; then
   die "Invalid service name '${SERVICE_NAME}'.
-       Must match: ^[a-z][a-z0-9-]*-service\$
-       Examples: auth-service, product-service, shopping-list-service"
+       Must match: ^[a-z][a-z0-9-]*\$
+       Examples: api-gateway, auth-service, mailer"
 fi
 
-# ── Derive names from SERVICE_NAME ────────────────────────────────────────────
-# auth-service           → AUTH_SERVICE (env var style)
-# auth-service           → authService  (camelCase for class prefix)
-# auth-service           → AuthService  (PascalCase for class names)
-# com...auth_service     → Java package (hyphens → underscores NOT used;
-#                          hyphens stripped, each word lowercased and joined)
+# ── Derive names ──────────────────────────────────────────────────────────────
+# Remove "-service" only IF it exists for the package name logic
+SERVICE_STRIPPED="${SERVICE_NAME%-service}"
+PACKAGE_SEGMENT="${SERVICE_STRIPPED//-/}"
+JAVA_PACKAGE="com.github.mpalambonisi.${PACKAGE_SEGMENT}"
 
-# Java package segment: strip "-service" suffix, replace remaining hyphens with dots
-# e.g. shopping-list-service → shopping.list  → package: ...smartkoszyka.shoppinglist
-SERVICE_STRIPPED="${SERVICE_NAME%-service}"                          # auth | shopping-list
-PACKAGE_SEGMENT="${SERVICE_STRIPPED//-/}"                            # auth | shoppinglist
-JAVA_PACKAGE="com.github.mpalambonisi.${PACKAGE_SEGMENT}"          # com.github...auth
-
-# PascalCase class prefix: capitalise each hyphen-separated word
+# PascalCase class prefix
 PASCAL_NAME=""
 IFS='-' read -ra PARTS <<< "$SERVICE_STRIPPED"
 for part in "${PARTS[@]}"; do
   PASCAL_NAME+="${part^}"
 done
-# e.g. Auth | ShoppingList
-MAIN_CLASS_NAME="${PASCAL_NAME}ServiceApplication"                   # AuthServiceApplication
+MAIN_CLASS_NAME="${PASCAL_NAME}Application" # Removed 'Service' from class name for generic feel
 
-# Artifact id used in pom.xml (keep hyphens — valid Maven artifact id)
 ARTIFACT_ID="$SERVICE_NAME"
 
 # ── Resolve port ──────────────────────────────────────────────────────────────
 if [[ -z "$PORT" ]]; then
-  # Auto-detect next free port starting at 8081
   USED_PORTS=$(grep -rh "server.port=" services/*/src/main/resources/application.properties \
                  2>/dev/null | grep -oP '\d+' | sort -n || true)
   PORT=8081
   while echo "$USED_PORTS" | grep -q "^${PORT}$"; do
     PORT=$((PORT + 1))
   done
-  warn "No port specified — assigned port ${PORT} (next available)"
+  warn "No port specified — assigned port ${PORT}"
 fi
 
-# ── Check port is numeric and in range ───────────────────────────────────────
-if ! [[ "$PORT" =~ ^[0-9]+$ ]] || (( PORT < 1024 || PORT > 65535 )); then
-  die "Port must be a number between 1024 and 65535, got: ${PORT}"
-fi
-
-# ── Guard: don't overwrite an existing service ────────────────────────────────
+# ── Guard: don't overwrite ────────────────────────────────────────────────────
 SERVICE_DIR="$REPO_ROOT/services/$SERVICE_NAME"
 if [[ -d "$SERVICE_DIR" ]]; then
-  die "Service directory already exists: services/${SERVICE_NAME}
-       Delete it first if you want to regenerate."
+  die "Service directory already exists: services/${SERVICE_NAME}"
 fi
 
 # ── Template substitution helper ─────────────────────────────────────────────
-# Replaces all placeholders in-place inside a file.
-# Tokens follow the {{TOKEN}} convention so they can't accidentally
-# collide with real XML/properties content.
 substitute() {
   local file="$1"
   sed -i \
@@ -137,63 +100,31 @@ substitute() {
     "$file"
 }
 
-# ── Check templates exist ─────────────────────────────────────────────────────
-for tpl in \
-  "$TEMPLATES_DIR/service-pom.xml" \
-  "$TEMPLATES_DIR/Dockerfile" \
-  "$TEMPLATES_DIR/application.properties"
-do
-  [[ -f "$tpl" ]] || die "Missing template: ${tpl}
-       Run this script from the repository root after cloning."
+# ── Check templates ───────────────────────────────────────────────────────────
+for tpl in "$TEMPLATES_DIR/service-pom.xml" "$TEMPLATES_DIR/Dockerfile" "$TEMPLATES_DIR/application.properties"; do
+  [[ -f "$tpl" ]] || die "Missing template: ${tpl}"
 done
 
-# ── Summary before creating anything ─────────────────────────────────────────
-echo ""
-echo -e "${BOLD}═══════════════════════════════════════════════════${RESET}"
-echo -e "${BOLD}  Creating microservice scaffold${RESET}"
-echo -e "${BOLD}═══════════════════════════════════════════════════${RESET}"
-echo ""
-echo -e "  Service name   : ${BOLD}${SERVICE_NAME}${RESET}"
-echo -e "  Artifact ID    : ${BOLD}${ARTIFACT_ID}${RESET}"
-echo -e "  Java package   : ${BOLD}${JAVA_PACKAGE}${RESET}"
-echo -e "  Main class     : ${BOLD}${MAIN_CLASS_NAME}${RESET}"
-echo -e "  Port           : ${BOLD}${PORT}${RESET}"
-echo -e "  Target dir     : ${BOLD}services/${SERVICE_NAME}${RESET}"
-echo ""
-
-# ── Create directory tree ─────────────────────────────────────────────────────
-PACKAGE_PATH="${JAVA_PACKAGE//.//}"   # com/github/mpalambonisi/auth
-
+# ── Create structure ──────────────────────────────────────────────────────────
+PACKAGE_PATH="${JAVA_PACKAGE//.//}"
 MAIN_SRC="$SERVICE_DIR/src/main/java/$PACKAGE_PATH"
 TEST_SRC="$SERVICE_DIR/src/test/java/$PACKAGE_PATH"
 RESOURCES="$SERVICE_DIR/src/main/resources"
 TEST_RESOURCES="$SERVICE_DIR/src/test/resources"
 
-info "Creating directory structure…"
-mkdir -p "$MAIN_SRC"
-mkdir -p "$TEST_SRC"
-mkdir -p "$RESOURCES"
-mkdir -p "$TEST_RESOURCES"
-success "Directories created"
+mkdir -p "$MAIN_SRC" "$TEST_SRC" "$RESOURCES" "$TEST_RESOURCES"
 
-# ── Copy & substitute templates ───────────────────────────────────────────────
-info "Generating pom.xml…"
+# ── Copy & substitute ─────────────────────────────────────────────────────────
 cp "$TEMPLATES_DIR/service-pom.xml" "$SERVICE_DIR/pom.xml"
 substitute "$SERVICE_DIR/pom.xml"
-success "pom.xml ready"
 
-info "Generating Dockerfile…"
 cp "$TEMPLATES_DIR/Dockerfile" "$SERVICE_DIR/Dockerfile"
 substitute "$SERVICE_DIR/Dockerfile"
-success "Dockerfile ready"
 
-info "Generating application.properties…"
 cp "$TEMPLATES_DIR/application.properties" "$RESOURCES/application.properties"
 substitute "$RESOURCES/application.properties"
-success "application.properties ready"
 
-# ── Generate @SpringBootApplication main class ────────────────────────────────
-info "Generating ${MAIN_CLASS_NAME}.java…"
+# ── Generate Main Class ───────────────────────────────────────────────────────
 cat > "$MAIN_SRC/${MAIN_CLASS_NAME}.java" << JAVA
 package ${JAVA_PACKAGE};
 
@@ -201,24 +132,16 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
-/** Entry point for the ${SERVICE_NAME}. */
 @SpringBootApplication
-@ComponentScan(
-  basePackages = {
-    "${JAVA_PACKAGE}",
-    "com.github.mpalambonisi.service"   // picks up common-lib beans
-})
+@ComponentScan(basePackages = {"${JAVA_PACKAGE}", "com.github.mpalambonisi.common"})
 public class ${MAIN_CLASS_NAME} {
-
   public static void main(String[] args) {
     SpringApplication.run(${MAIN_CLASS_NAME}.class, args);
   }
 }
 JAVA
-success "${MAIN_CLASS_NAME}.java ready"
 
-# ── Generate placeholder integration test ────────────────────────────────────
-info "Generating ${MAIN_CLASS_NAME}Tests.java…"
+# ── Generate Test ─────────────────────────────────────────────────────────────
 cat > "$TEST_SRC/${MAIN_CLASS_NAME}Tests.java" << JAVA
 package ${JAVA_PACKAGE};
 
@@ -235,52 +158,18 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class ${MAIN_CLASS_NAME}Tests {
 
   @Container
-  static PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>("postgres:15-alpine")
-          .withDatabaseName("testdb")
-          .withUsername("test")
-          .withPassword("test");
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
 
   @DynamicPropertySource
   static void configureProperties(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url",      postgres::getJdbcUrl);
+    registry.add("spring.datasource.url", postgres::getJdbcUrl);
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
   }
 
   @Test
-  void contextLoads() {
-    // Verifies the Spring context starts successfully with a real database.
-  }
+  void contextLoads() {}
 }
 JAVA
-success "${MAIN_CLASS_NAME}Tests.java ready"
 
-# ── Remind developer to register the module ───────────────────────────────────
-echo ""
-echo -e "${BOLD}═══════════════════════════════════════════════════${RESET}"
-echo -e "${GREEN}${BOLD}  ✔ Service '${SERVICE_NAME}' created successfully!${RESET}"
-echo -e "${BOLD}═══════════════════════════════════════════════════${RESET}"
-echo ""
-echo -e "${BOLD}Next steps:${RESET}"
-echo ""
-echo -e "  1. Register the module in the ${BOLD}root pom.xml${RESET}:"
-echo -e "     Add inside <modules>:"
-echo -e "     ${CYAN}<module>services/${SERVICE_NAME}</module>${RESET}"
-echo ""
-echo -e "  2. Enable the service in ${BOLD}docker-compose.yml${RESET}:"
-echo -e "     Uncomment the '${SERVICE_NAME}' block (or add a new one)."
-echo ""
-echo -e "  3. Build and verify:"
-echo -e "     ${CYAN}./mvnw clean verify -pl services/${SERVICE_NAME} -am${RESET}"
-echo ""
-echo ""
-echo -e "  4. Update prometheus.yml:"
-echo -e "     - job_name: '${SERVICE_NAME}'"
-echo -e "       static_configs:"
-echo -e "         - targets: ['${SERVICE_NAME}:${MANAGEMENT_PORT}']"
-echo ""
-echo -e "  5. Expose the management port in ${BOLD}docker-compose.yml${RESET}:"
-echo -e "     Add the management port to the '${SERVICE_NAME}' service block."
-echo -e "     ${CYAN}     - \"${MANAGEMENT_PORT}:${MANAGEMENT_PORT}\"${RESET}"
-echo ""
+success "Service '${SERVICE_NAME}' created successfully at services/${SERVICE_NAME}"
