@@ -23,9 +23,9 @@
     <module>shared/common-lib</module>
     <module>services/auth-service</module>
     <module>services/product-service</module>
+    <module>services/api-gateway</module>
     <!-- future modules:
         <module>services/shopping-list-service</module>
-        <module>services/api-gateway</module>
         -->
   </modules>
   <!-- ─────────────────────────────────────────
@@ -39,7 +39,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <!-- Dependency versions not managed by Spring Boot BOM -->
-    <lombok.version>1.18.32</lombok.version>
+    <lombok.version>1.18.36</lombok.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <jjwt.version>0.12.6</jjwt.version>
     <testcontainers.version>1.19.8</testcontainers.version>
@@ -113,6 +113,14 @@
         <artifactId>commons-io</artifactId>
         <version>${commons-io.version}</version>
       </dependency>
+      <!-- Spring Cloud BOM -->
+      <dependency>
+          <groupId>org.springframework.cloud</groupId>
+          <artifactId>spring-cloud-dependencies</artifactId>
+          <version>2023.0.3</version>
+          <type>pom</type>
+          <scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <!-- ─────────────────────────────────────────
@@ -131,6 +139,13 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <repositories>
+      <repository>
+          <id>spring-milestones</id>
+          <url>https://repo.spring.io/milestone</url>
+      </repository>
+  </repositories>
+
   <!-- ─────────────────────────────────────────
          Build  — plugin management (versions pinned here,
          activated per-module or via profiles below)
