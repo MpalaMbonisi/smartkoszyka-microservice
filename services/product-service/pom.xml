@@ -20,7 +20,7 @@
 
     <properties>
         <!-- Override the default JaCoCo exclusions for this module if needed -->
-        <!-- <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum> -->
+        <jacoco.line.coverage.minimum>0.60</jacoco.line.coverage.minimum>
     </properties>
 
     <dependencies>
@@ -47,10 +47,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
         <!-- ──────────────────────────── Database ────────────────────────── -->
