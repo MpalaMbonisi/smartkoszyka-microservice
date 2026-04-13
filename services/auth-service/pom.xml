@@ -28,7 +28,7 @@
         <!-- ────────────────────────────── Internal ──────────────────────── -->
         <dependency>
             <groupId>com.github.mpalambonisi</groupId>
-            <artifactId>common-lib</artifactId>
+            <artifactId>common-servlet</artifactId>
         </dependency>
 
         <!-- ───────────────────────── Spring Boot starters ───────────────── -->

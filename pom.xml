@@ -20,13 +20,11 @@
   <description>Multi-module microservices scaffold for SmartKoszyka</description>
   <!-- ──────────── Modules ─────────────── -->
   <modules>
-    <module>shared/common-lib</module>
+    <module>shared/common-core</module>
+    <module>shared/common-servlet</module>
     <module>services/auth-service</module>
     <module>services/product-service</module>
     <module>services/api-gateway</module>
-    <!-- future modules:
-        <module>services/shopping-list-service</module>
-        -->
   </modules>
   <!-- ─────────────────────────────────────────
          Global properties
@@ -62,11 +60,18 @@
          ───────────────────────────────────────── -->
   <dependencyManagement>
     <dependencies>
-      <!-- Internal common-lib -->
+      <!-- Internal common-core -->
       <dependency>
-        <groupId>com.github.mpalambonisi</groupId>
-        <artifactId>common-lib</artifactId>
-        <version>${project.version}</version>
+          <groupId>com.github.mpalambonisi</groupId>
+          <artifactId>common-core</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
+      <!-- Internal common-servlet -->
+      <dependency>
+          <groupId>com.github.mpalambonisi</groupId>
+          <artifactId>common-servlet</artifactId>
+          <version>${project.version}</version>
       </dependency>
       <!-- Lombok -->
       <dependency>

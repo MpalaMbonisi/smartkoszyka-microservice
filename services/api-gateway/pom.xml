@@ -24,37 +24,10 @@
     </properties>
 
     <dependencies>
-
-        <!-- ── Internal — exclude entire servlet stack ───────────────────── -->
+        <!-- Use ONLY core library -->
         <dependency>
             <groupId>com.github.mpalambonisi</groupId>
-            <artifactId>common-lib</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-web</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-tomcat</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.tomcat.embed</groupId>
-                    <artifactId>tomcat-embed-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.tomcat.embed</groupId>
-                    <artifactId>tomcat-embed-el</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.tomcat.embed</groupId>
-                    <artifactId>tomcat-embed-websocket</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-webmvc</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>common-core</artifactId>
         </dependency>
 
         <!-- ── Spring Cloud Gateway (brings WebFlux + Netty) ─────────────── -->
