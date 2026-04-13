@@ -33,6 +33,12 @@ public interface JwtService {
   boolean isTokenValid(String token, UserDetails userDetails);
 
   /**
+   * Validate token using a plain username string. Used by the gateway which has no
+   * UserDetailService.
+   */
+  boolean isTokenValid(String token, String username);
+
+  /**
    * Generic claim extractor.
    *
    * @param token compact JWT string

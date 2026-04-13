@@ -58,6 +58,14 @@ public class JwtServiceImpl implements JwtService {
   }
 
   @Override
+  public boolean isTokenValid(String token, String username) {
+    final String extractedUsername = extractUsername(token);
+    return extractedUsername != null
+        && extractedUsername.equals(username)
+        && !isTokenExpired(token);
+  }
+
+  @Override
   public <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
     final Claims claims = extractAllClaims(token);
     return claimResolver.apply(claims);
