@@ -8,7 +8,7 @@ WORKDIR /workspace
 
 # Copy root pom + common-lib first for better layer caching
 COPY pom.xml .
-COPY shared/common-lib ./shared/common-lib
+COPY shared ./shared
 COPY services/ ./services/
 
 # Build only this module (common-lib is compiled as a dependency)
