@@ -27,15 +27,16 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
 
   @Override
   public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
-    exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-    exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+    var response = exchange.getResponse();
+    response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
 
     try {
       byte[] bytes = objectMapper.writeValueAsBytes(new ErrorBody(List.of(ex.getMessage())));
-      DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
-      return exchange.getResponse().writeWith(Mono.just(buffer));
+      DataBuffer buffer = response.bufferFactory().wrap(bytes);
+      return response.writeWith(Mono.just(buffer));
     } catch (JsonProcessingException e) {
-      return exchange.getResponse().setComplete();
+      return response.setComplete();
     }
   }
 

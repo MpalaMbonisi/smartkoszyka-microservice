@@ -4,6 +4,7 @@ import com.github.mpalambonisi.auth.model.Account;
 import com.github.mpalambonisi.auth.repository.AccountRepository;
 import com.github.mpalambonisi.common.exception.EmailAlreadyExistsException;
 import com.github.mpalambonisi.common.exception.ResourceNotFoundException;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class AccountServiceImpl implements AccountService {
     validateRegistrationInputs(email, password, firstName, lastName);
 
     // Normalise email (lowercase and trim)
-    String normalisedEmail = email.toLowerCase().trim();
+    String normalisedEmail = email.toLowerCase(Locale.ROOT).trim();
 
     // Check if email already exists
     if (accountRepository.existsByEmail(normalisedEmail)) {
@@ -55,7 +56,7 @@ public class AccountServiceImpl implements AccountService {
   @Override
   @Transactional(readOnly = true)
   public Account getAccountByEmail(String email) {
-    String normalisedEmail = email.toLowerCase().trim();
+    String normalisedEmail = email.toLowerCase(Locale.ROOT).trim();
     return accountRepository
         .findByEmail(normalisedEmail)
         .orElseThrow(
@@ -66,7 +67,7 @@ public class AccountServiceImpl implements AccountService {
   @Override
   @Transactional(readOnly = true)
   public boolean existsByEmail(String email) {
-    String normalisedEmail = email.toLowerCase().trim();
+    String normalisedEmail = email.toLowerCase(Locale.ROOT).trim();
     return accountRepository.existsByEmail(normalisedEmail);
   }
 
@@ -81,17 +82,32 @@ public class AccountServiceImpl implements AccountService {
    */
   private void validateRegistrationInputs(
       String email, String password, String firstName, String lastName) {
+    validateEmail(email);
+    validatePassword(password);
+    validateFirstName(firstName);
+    validateLastName(lastName);
+  }
 
-    if (email == null || email.trim().isEmpty()) {
+  private void validateEmail(String email) {
+    if (email == null || email.isBlank()) {
       throw new IllegalArgumentException("Email cannot be null or empty");
     }
-    if (password == null || password.trim().isEmpty()) {
+  }
+
+  private void validatePassword(String password) {
+    if (password == null || password.isBlank()) {
       throw new IllegalArgumentException("Password cannot be null or empty");
     }
-    if (firstName == null || firstName.trim().isEmpty()) {
+  }
+
+  private void validateFirstName(String firstName) {
+    if (firstName == null || firstName.isBlank()) {
       throw new IllegalArgumentException("First name cannot be null or empty");
     }
-    if (lastName == null || lastName.trim().isEmpty()) {
+  }
+
+  private void validateLastName(String lastName) {
+    if (lastName == null || lastName.isBlank()) {
       throw new IllegalArgumentException("Last name cannot be null or empty");
     }
   }
@@ -106,7 +122,7 @@ public class AccountServiceImpl implements AccountService {
   @Transactional
   public void deleteAccount(String email) {
     // Normalise email (lowercase and trim)
-    String normalisedEmail = email.toLowerCase().trim();
+    String normalisedEmail = email.toLowerCase(Locale.ROOT).trim();
 
     Account accountToDelete =
         accountRepository

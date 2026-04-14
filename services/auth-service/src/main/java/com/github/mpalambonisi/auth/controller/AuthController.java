@@ -7,6 +7,7 @@ import com.github.mpalambonisi.common.dto.request.LoginRequest;
 import com.github.mpalambonisi.common.dto.response.AuthResponse;
 import com.github.mpalambonisi.common.service.JwtService;
 import jakarta.validation.Valid;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -75,9 +76,9 @@ public class AuthController {
   @PostMapping("/login")
   public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
     // Authenticate user
+    final String email = request.getEmail().toLowerCase(Locale.ROOT);
     authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(
-            request.getEmail().toLowerCase().trim(), request.getPassword()));
+        new UsernamePasswordAuthenticationToken(email.trim(), request.getPassword()));
 
     // Load user details
     Account account = accountService.getAccountByEmail(request.getEmail());

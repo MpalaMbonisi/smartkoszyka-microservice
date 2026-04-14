@@ -2,6 +2,7 @@ package com.github.mpalambonisi.auth.service;
 
 import com.github.mpalambonisi.auth.repository.AccountRepository;
 import java.util.ArrayList;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,9 +19,10 @@ public class AccountDetailsServiceImpl implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    final String sanitisedEmail = email.toLowerCase(Locale.ROOT);
     var account =
         accountRepository
-            .findByEmail(email.toLowerCase().trim())
+            .findByEmail(sanitisedEmail.trim())
             .orElseThrow(() -> new UsernameNotFoundException("Email does not exist: " + email));
     return new User(account.getEmail(), account.getPasswordHash(), new ArrayList<>());
   }

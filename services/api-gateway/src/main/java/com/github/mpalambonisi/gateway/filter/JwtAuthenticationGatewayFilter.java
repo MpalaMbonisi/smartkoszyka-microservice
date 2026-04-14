@@ -30,7 +30,8 @@ public class JwtAuthenticationGatewayFilter
   @Override
   public GatewayFilter apply(Config config) {
     return (exchange, chain) -> {
-      String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+      var request = exchange.getRequest();
+      String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
       // No token — reject immediately
       if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -64,8 +65,9 @@ public class JwtAuthenticationGatewayFilter
   }
 
   private Mono<Void> unauthorised(ServerWebExchange exchange) {
-    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-    return exchange.getResponse().setComplete();
+    var response = exchange.getResponse();
+    response.setStatusCode(HttpStatus.UNAUTHORIZED);
+    return response.setComplete();
   }
 
   /**
