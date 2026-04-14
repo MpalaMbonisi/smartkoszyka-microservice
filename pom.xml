@@ -47,7 +47,7 @@
     <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
     <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
     <spotbugs-maven-plugin.version>4.8.3.0</spotbugs-maven-plugin.version>
-    <maven-pmd-plugin.version>3.21.2</maven-pmd-plugin.version>
+    <maven-pmd-plugin.version>3.25.0</maven-pmd-plugin.version>
     <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     <!-- Quality gate thresholds -->
     <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum>
