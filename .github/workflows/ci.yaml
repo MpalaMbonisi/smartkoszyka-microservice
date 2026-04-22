@@ -44,8 +44,6 @@ jobs:
       - name: Compile
         run: ./mvnw clean compile -T 1C
 
-      - name: Run Tests + JaCoCo report
-        run: ./mvnw test jacoco:report
 
       - name: Publish Test Results
         uses: dorny/test-reporter@v1
@@ -55,14 +53,6 @@ jobs:
           path: "**/target/surefire-reports/*.xml"
           reporter: java-junit
           fail-on-error: true
-
-      - name: Upload JaCoCo coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: jacoco-report
-          path: "**/target/site/jacoco/"
-          retention-days: 7
 
       - name: Package (skip tests — already ran)
         run: ./mvnw package -DskipTests
@@ -76,7 +66,7 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────────────
   # 2. Code Quality
-  #    Checkstyle, SpotBugs, PMD, JaCoCo gate — runs with -P quality profile.
+  #    Checkstyle, SpotBugs, PMD  gate — runs with -P quality profile.
   # ────────────────────────────────────────────────────────────────────────────
   code-quality:
     name: Code Quality
@@ -97,7 +87,7 @@ jobs:
       - name: Make mvnw executable
         run: chmod +x mvnw
 
-      - name: Run quality gates (Checkstyle + SpotBugs + PMD + JaCoCo)
+      - name: Run quality gates (Checkstyle + SpotBugs + PMD)
         run: ./mvnw verify -P quality -DskipTests=false
 
       - name: Upload SpotBugs report

@@ -76,8 +76,8 @@ Examples:
 
 | Profile         | Purpose                                               |
 |-----------------|-------------------------------------------------------|
-| *(default)*     | Compile + test + JaCoCo agent — no static analysis   |
-| `quality`       | + Checkstyle + SpotBugs + PMD + JaCoCo coverage gate |
+| *(default)*     | Compile + test — no static analysis   |
+| `quality`       | + Checkstyle + SpotBugs + PMD coverage gate |
 | `skip-quality`  | Skip all static analysis (fast local iteration)       |
 
 ```bash

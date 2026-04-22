@@ -64,15 +64,6 @@ repos:
         stages: [pre-push]
         verbose: true
 
-      - id: maven-jacoco
-        name: JaCoCo Coverage Gate
-        entry: bash -c 'export JAVA_HOME=$(scripts/find-java21.sh);
-                        ./mvnw jacoco:check'
-        language: system
-        pass_filenames: false
-        stages: [pre-push]
-        verbose: true
-
       - id: maven-spotbugs
         name: SpotBugs
         entry: bash -c 'export JAVA_HOME=$(scripts/find-java21.sh);

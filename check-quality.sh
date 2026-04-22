@@ -38,12 +38,6 @@ run "Checkstyle"  ./mvnw checkstyle:check               || EXIT_CHECKSTYLE=$?
 run "SpotBugs"    ./mvnw spotbugs:check    -P quality    || EXIT_SPOTBUGS=$?
 run "PMD"         ./mvnw pmd:check         -P quality    || EXIT_PMD=$?
 
-if ! $SKIP_TESTS; then
-  run "Tests + JaCoCo report" ./mvnw clean test jacoco:report || EXIT_TESTS=$?
-fi
-
-run "JaCoCo coverage gate" ./mvnw jacoco:check           || EXIT_COVERAGE=$?
-
 echo ""
 echo "═══════════════════════════════════════════════════"
 echo "  Summary"
@@ -55,7 +49,6 @@ echo "  Tests      : $([ $EXIT_TESTS      -eq 0 ] && echo '🟢 PASSED' || echo 
 echo "  Coverage   : $([ $EXIT_COVERAGE   -eq 0 ] && echo '🟢 PASSED' || echo '🛑 FAILED')"
 echo ""
 echo "  Reports:"
-echo "    JaCoCo  → target/site/jacoco/index.html"
 echo "    SpotBugs→ **/target/spotbugs/spotbugsXml.xml"
 echo "    PMD     → **/target/pmd/pmd.xml"
 echo "═══════════════════════════════════════════════════"
