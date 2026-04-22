@@ -41,8 +41,8 @@ jobs:
       - name: Make mvnw executable
         run: chmod +x mvnw
 
-      - name: Compile
-        run: ./mvnw clean compile -T 1C
+      - name: Build and Test
+        run: ./mvnw clean test -T 1C
 
 
       - name: Publish Test Results
