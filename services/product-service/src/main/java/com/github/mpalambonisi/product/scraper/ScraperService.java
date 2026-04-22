@@ -8,8 +8,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,10 +68,11 @@ public class ScraperService {
    * @throws RuntimeException if the specified category name is not found in the database.
    */
   @Transactional
-  public List<Product> scrapeCategory(String categoryName, String categoryUrl) {
-    List<Product> masterProductList = new ArrayList<>();
+  public ScrapeSummary scrapeCategory(String categoryName, String categoryUrl) {
+    int newCount = 0;
+    int updatedCount = 0;
+    int failedCount = 0;
 
-    // Fetch category
     Category category =
         categoryRepository
             .findByName(categoryName)
@@ -89,25 +88,21 @@ public class ScraperService {
       totalItems = getTotalItemCount(categoryUrl);
     } catch (IOException e) {
       log.error("Failed to get total item count for {}: {}", categoryName, e.getMessage());
-      return masterProductList;
+      return new ScrapeSummary(newCount, updatedCount, failedCount);
     }
 
     if (totalItems == 0) {
       log.warn("No items found or count failed for {}", categoryName);
-      return masterProductList;
+      return new ScrapeSummary(newCount, updatedCount, failedCount);
     }
 
     int totalPages = (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
     log.info(
         "Scraping '{}'. Found {} items across {} pages...", categoryName, totalItems, totalPages);
 
-    int newProductsCount = 0;
-    int updatedProductsCount = 0;
-
     for (int pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
       String urlToScrape =
           BASE_URL + categoryUrl + "/?format=ajax&onlyRefinements=false&page=" + pageNumber;
-      log.debug("Scraping page: {}/{}", pageNumber, totalPages);
 
       try {
         Document doc =
@@ -116,70 +111,78 @@ public class ScraperService {
                 .userAgent(USER_AGENT)
                 .timeout(15000)
                 .get();
-        Elements productTiles = doc.select(SELECTOR_PRODUCT_TILE);
 
+        Elements productTiles = doc.select(SELECTOR_PRODUCT_TILE);
         if (productTiles.isEmpty()) {
-          log.warn("Page {} was empty, stopping scrape for this category early.", pageNumber);
+          log.warn("Page {} was empty, stopping early.", pageNumber);
           break;
         }
 
         for (Element tile : productTiles) {
-          String name = tile.select(SELECTOR_NAME).text();
-          String priceText = tile.select(SELECTOR_PRICE).text();
-          String imageUrl = tile.select(SELECTOR_IMAGE).attr("content");
-          String brand = parseBrandFromGtmData(tile, name);
+          try {
+            String name = tile.select(SELECTOR_NAME).text();
+            String priceText = tile.select(SELECTOR_PRICE).text();
+            String imageUrl = tile.select(SELECTOR_IMAGE).attr("content");
+            String brand = parseBrandFromGtmData(tile, name);
+            PriceUnit priceUnit = parsePriceAndUnit(priceText);
 
-          log.debug("Product: {} | Raw price text: '{}'", name, priceText);
+            Optional<Product> existing =
+                productRepository.findByNameAndUnitAndCategoryId(
+                    name, priceUnit.unit(), category.getId());
 
-          PriceUnit priceUnit = parsePriceAndUnit(priceText);
-
-          if (priceUnit.price().compareTo(BigDecimal.ZERO) == 0) {
-            log.warn("Failed to parse price for product: {} | Raw text: '{}'", name, priceText);
+            if (existing.isPresent()) {
+              // Update — managed entity, dirty checking will flush automatically
+              Product product = existing.get();
+              product.setPrice(priceUnit.price());
+              product.setImageUrl(makeAbsoluteUrl(imageUrl));
+              product.setBrand(brand);
+              updatedCount++;
+              log.debug("Updated: {} ({})", name, priceUnit.unit());
+            } else {
+              // Insert — new transient entity
+              Product product =
+                  new Product(
+                      name,
+                      priceUnit.price(),
+                      priceUnit.unit(),
+                      makeAbsoluteUrl(imageUrl),
+                      brand,
+                      category);
+              productRepository.save(product);
+              newCount++;
+              log.debug("Inserted: {} ({})", name, priceUnit.unit());
+            }
+          } catch (Exception e) {
+            // Log and continue — one bad product should not stop the whole category
+            failedCount++;
+            log.error("Failed to process product tile on page {}: {}", pageNumber, e.getMessage());
           }
-
-          // Check if product already exists (by name, unit, and category)
-          Optional<Product> existingProduct = findExistingProduct(name, priceUnit.unit(), category);
-
-          Product product;
-          if (existingProduct.isPresent()) {
-            // Update existing product
-            product = existingProduct.get();
-            product.setPrice(priceUnit.price());
-            product.setImageUrl(makeAbsoluteUrl(imageUrl));
-            product.setBrand(brand);
-            updatedProductsCount++;
-            log.debug("Updating existing product: {} ({})", name, priceUnit.unit());
-          } else {
-            // Create new product
-            product =
-                new Product(
-                    name,
-                    priceUnit.price(),
-                    priceUnit.unit(),
-                    makeAbsoluteUrl(imageUrl),
-                    brand,
-                    category);
-            newProductsCount++;
-            log.debug("Creating new product: {} ({})", name, priceUnit.unit());
-          }
-
-          masterProductList.add(product);
         }
-        Thread.sleep(500); // Be respectful to the server
+
+        Thread.sleep(500);
+
       } catch (IOException | InterruptedException e) {
         log.error("Error scraping page {}: {}", pageNumber, e.getMessage());
         Thread.currentThread().interrupt();
+        break;
       }
     }
 
     log.info(
-        "Finished scraping '{}'. New products: {}, Updated products: {}, Total: {}",
+        "Finished '{}'. New: {}, Updated: {}, Failed: {}",
         categoryName,
-        newProductsCount,
-        updatedProductsCount,
-        masterProductList.size());
+        newCount,
+        updatedCount,
+        failedCount);
 
-    return masterProductList;
+    return new ScrapeSummary(newCount, updatedCount, failedCount);
+  }
+
+  /** Simple value object to carry scrape results back to the scheduler. */
+  public record ScrapeSummary(int newProducts, int updatedProducts, int failedProducts) {
+    public int total() {
+      return newProducts + updatedProducts;
+    }
   }
 
   /**

@@ -1,11 +1,8 @@
 package com.github.mpalambonisi.product.scraper;
 
-import com.github.mpalambonisi.product.model.Product;
-import com.github.mpalambonisi.product.repository.ProductRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +18,6 @@ import org.springframework.stereotype.Component;
 public class ScraperScheduled {
   private static final Logger log = LoggerFactory.getLogger(ScraperScheduled.class);
   private final ScraperService scraperService;
-  private final ProductRepository productRepository;
 
   // Rate limiting to prevent excessive scraping
   private Instant lastScrapedTime;
@@ -51,9 +47,8 @@ public class ScraperScheduled {
     CATEGORIES_TO_SCRAPE.put("Dla zwierząt", "/dla-zwierzat");
   }
 
-  public ScraperScheduled(ScraperService scraperService, ProductRepository productRepository) {
+  public ScraperScheduled(ScraperService scraperService) {
     this.scraperService = scraperService;
-    this.productRepository = productRepository;
   }
 
   /**
@@ -121,46 +116,53 @@ public class ScraperScheduled {
     }
 
     Instant startTime = Instant.now();
-    long totalProductsSaved = 0;
+    int totalNew = 0;
+    int totalUpdated = 0;
+    int totalFailed = 0;
 
     try {
       log.info("Starting product scrape from Biedronka...");
 
-      for (Map.Entry<String, String> category : CATEGORIES_TO_SCRAPE.entrySet()) {
-        log.info("Scraping category: {} ({})", category.getKey(), category.getValue());
+      for (Map.Entry<String, String> entry : CATEGORIES_TO_SCRAPE.entrySet()) {
+        String categoryName = entry.getKey();
+        String categoryUrl = entry.getValue();
 
-        List<Product> products =
-            scraperService.scrapeCategory(category.getKey(), category.getValue());
+        log.info("Scraping category: {} ({})", categoryName, categoryUrl);
 
-        if (!products.isEmpty()) {
-          productRepository.saveAll(products);
-          totalProductsSaved += products.size();
-          log.info("Saved {} products from category: {}", products.size(), category.getKey());
-        } else {
-          log.warn("No products found for category: {}", category.getKey());
+        try {
+          ScraperService.ScrapeSummary summary =
+              scraperService.scrapeCategory(categoryName, categoryUrl);
+
+          totalNew += summary.newProducts();
+          totalUpdated += summary.updatedProducts();
+          totalFailed += summary.failedProducts();
+
+          log.info(
+              "Category '{}' done. New: {}, Updated: {}, Failed: {}",
+              categoryName,
+              summary.newProducts(),
+              summary.updatedProducts(),
+              summary.failedProducts());
+
+        } catch (Exception e) {
+          // Category-level failure — log and continue to next category
+          log.error("Category '{}' scrape failed entirely: {}", categoryName, e.getMessage());
         }
       }
 
-      Instant endTime = Instant.now();
-      long durationSeconds = Duration.between(startTime, endTime).toSeconds();
-
+      long durationSeconds = Duration.between(startTime, Instant.now()).toSeconds();
       log.info(
-          "Scraping completed successfully! Saved/Updated {} products in {} seconds.",
-          totalProductsSaved,
+          "Scrape complete. New: {}, Updated: {}, Failed: {}, Duration: {}s",
+          totalNew,
+          totalUpdated,
+          totalFailed,
           durationSeconds);
 
-      // Update last scraped time after successful scrape
       lastScrapedTime = Instant.now();
 
     } catch (Exception e) {
-      Instant endTime = Instant.now();
-      long durationSeconds = Duration.between(startTime, endTime).toSeconds();
-
-      log.error(
-          "Scraping failed after {} seconds. Products saved before failure: {}",
-          durationSeconds,
-          totalProductsSaved,
-          e);
+      long durationSeconds = Duration.between(startTime, Instant.now()).toSeconds();
+      log.error("Scrape run failed after {}s", durationSeconds, e);
     }
   }
 }
