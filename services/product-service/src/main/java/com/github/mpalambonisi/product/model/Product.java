@@ -48,7 +48,7 @@ public class Product {
   @Column(length = 200)
   private String brand;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "category_id", nullable = false)
   @ToString.Exclude
   private Category category;
