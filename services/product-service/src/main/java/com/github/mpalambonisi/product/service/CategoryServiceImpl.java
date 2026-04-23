@@ -37,7 +37,7 @@ public class CategoryServiceImpl implements CategoryService {
   @Override
   @Transactional(readOnly = true)
   public Category getCategoryByName(String name) {
-    if (name == null || name.trim().isEmpty()) {
+    if (name == null || name.isBlank()) {
       throw new IllegalArgumentException("Category name cannot be null or empty");
     }
 

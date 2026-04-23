@@ -32,7 +32,7 @@ public class ProductServiceImpl implements ProductService {
   @Transactional(readOnly = true)
   public List<Product> searchProductsByName(String query) {
 
-    if (query == null || query.trim().isEmpty()) {
+    if (query == null || query.isBlank()) {
       throw new IllegalArgumentException("Search query cannot be null or empty");
     }
 
