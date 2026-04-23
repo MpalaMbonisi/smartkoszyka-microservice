@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 /** Scheduled tasks for running the scraper. */
 @Component
 public class ScraperScheduled {
-  private static final Logger log = LoggerFactory.getLogger(ScraperScheduled.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ScraperScheduled.class);
   private final ScraperService scraperService;
 
   // Rate limiting to prevent excessive scraping
@@ -60,16 +60,16 @@ public class ScraperScheduled {
   @EventListener(ApplicationReadyEvent.class)
   public void runScraperOnStartup() {
     if (runOnStartup) {
-      log.info("Application started - Running initial product scrape...");
+      LOG.info("Application started - Running initial product scrape...");
       runScrape();
     } else {
-      log.info("Startup scraping is disabled. Set scraper.run-on-startup=true to enable.");
+      LOG.info("Startup scraping is disabled. Set scraper.run-on-startup=true to enable.");
     }
   }
 
   /** Runs the scraper manually (for testing/admin use only). */
   public void runScraper() {
-    log.info("Running scraper immediately...");
+    LOG.info("Running scraper immediately...");
     runScrape();
   }
 
@@ -80,7 +80,7 @@ public class ScraperScheduled {
    */
   @Scheduled(cron = "0 0 0 * * *", zone = "Europe/Warsaw")
   public void runDailyScrape() {
-    log.info("Starting scheduled daily scrape at midnight (Europe/Warsaw timezone)...");
+    LOG.info("Starting scheduled daily scrape at midnight (Europe/Warsaw timezone)...");
     runScrape();
   }
 
@@ -97,7 +97,7 @@ public class ScraperScheduled {
     Duration timeSinceLastScrape = Duration.between(lastScrapedTime, Instant.now());
     if (timeSinceLastScrape.compareTo(MIN_SCRAPE_INTERVAL) < 0) {
       long hoursRemaining = MIN_SCRAPE_INTERVAL.minus(timeSinceLastScrape).toHours();
-      log.info(
+      LOG.info(
           "Rate limit active: Last scrape was {} hours ago. "
               + "Minimum interval is {} hours. Skipping scrape. "
               + "Next scrape available in ~{} hours.",
@@ -121,13 +121,13 @@ public class ScraperScheduled {
     int totalFailed = 0;
 
     try {
-      log.info("Starting product scrape from Biedronka...");
+      LOG.info("Starting product scrape from Biedronka...");
 
       for (Map.Entry<String, String> entry : CATEGORIES_TO_SCRAPE.entrySet()) {
         String categoryName = entry.getKey();
         String categoryUrl = entry.getValue();
 
-        log.info("Scraping category: {} ({})", categoryName, categoryUrl);
+        LOG.info("Scraping category: {} ({})", categoryName, categoryUrl);
 
         try {
           ScraperService.ScrapeSummary summary =
@@ -137,7 +137,7 @@ public class ScraperScheduled {
           totalUpdated += summary.updatedProducts();
           totalFailed += summary.failedProducts();
 
-          log.info(
+          LOG.info(
               "Category '{}' done. New: {}, Updated: {}, Failed: {}",
               categoryName,
               summary.newProducts(),
@@ -146,12 +146,12 @@ public class ScraperScheduled {
 
         } catch (Exception e) {
           // Category-level failure — log and continue to next category
-          log.error("Category '{}' scrape failed entirely: {}", categoryName, e.getMessage());
+          LOG.error("Category '{}' scrape failed entirely: {}", categoryName, e.getMessage());
         }
       }
 
       long durationSeconds = Duration.between(startTime, Instant.now()).toSeconds();
-      log.info(
+      LOG.info(
           "Scrape complete. New: {}, Updated: {}, Failed: {}, Duration: {}s",
           totalNew,
           totalUpdated,
@@ -162,7 +162,7 @@ public class ScraperScheduled {
 
     } catch (Exception e) {
       long durationSeconds = Duration.between(startTime, Instant.now()).toSeconds();
-      log.error("Scrape run failed after {}s", durationSeconds, e);
+      LOG.error("Scrape run failed after {}s", durationSeconds, e);
     }
   }
 }

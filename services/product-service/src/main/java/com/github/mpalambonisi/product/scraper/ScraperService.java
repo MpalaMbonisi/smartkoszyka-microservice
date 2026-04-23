@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ScraperService {
 
-  private static final Logger log = LoggerFactory.getLogger(ScraperService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ScraperScheduled.class);
 
   private final CategoryRepository categoryRepository;
   private final ProductRepository productRepository;
@@ -87,17 +87,17 @@ public class ScraperService {
     try {
       totalItems = getTotalItemCount(categoryUrl);
     } catch (IOException e) {
-      log.error("Failed to get total item count for {}: {}", categoryName, e.getMessage());
+      LOG.error("Failed to get total item count for {}: {}", categoryName, e.getMessage());
       return new ScrapeSummary(newCount, updatedCount, failedCount);
     }
 
     if (totalItems == 0) {
-      log.warn("No items found or count failed for {}", categoryName);
+      LOG.warn("No items found or count failed for {}", categoryName);
       return new ScrapeSummary(newCount, updatedCount, failedCount);
     }
 
     int totalPages = (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
-    log.info(
+    LOG.info(
         "Scraping '{}'. Found {} items across {} pages...", categoryName, totalItems, totalPages);
 
     for (int pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
@@ -114,7 +114,7 @@ public class ScraperService {
 
         Elements productTiles = doc.select(SELECTOR_PRODUCT_TILE);
         if (productTiles.isEmpty()) {
-          log.warn("Page {} was empty, stopping early.", pageNumber);
+          LOG.warn("Page {} was empty, stopping early.", pageNumber);
           break;
         }
 
@@ -137,7 +137,7 @@ public class ScraperService {
               product.setImageUrl(makeAbsoluteUrl(imageUrl));
               product.setBrand(brand);
               updatedCount++;
-              log.debug("Updated: {} ({})", name, priceUnit.unit());
+              LOG.debug("Updated: {} ({})", name, priceUnit.unit());
             } else {
               // Insert — new transient entity
               Product product =
@@ -150,25 +150,25 @@ public class ScraperService {
                       category);
               productRepository.save(product);
               newCount++;
-              log.debug("Inserted: {} ({})", name, priceUnit.unit());
+              LOG.debug("Inserted: {} ({})", name, priceUnit.unit());
             }
           } catch (Exception e) {
             // Log and continue — one bad product should not stop the whole category
             failedCount++;
-            log.error("Failed to process product tile on page {}: {}", pageNumber, e.getMessage());
+            LOG.error("Failed to process product tile on page {}: {}", pageNumber, e.getMessage());
           }
         }
 
         Thread.sleep(500);
 
       } catch (IOException | InterruptedException e) {
-        log.error("Error scraping page {}: {}", pageNumber, e.getMessage());
+        LOG.error("Error scraping page {}: {}", pageNumber, e.getMessage());
         Thread.currentThread().interrupt();
         break;
       }
     }
 
-    log.info(
+    LOG.info(
         "Finished '{}'. New: {}, Updated: {}, Failed: {}",
         categoryName,
         newCount,
@@ -185,32 +185,20 @@ public class ScraperService {
     }
   }
 
-  /**
-   * Finds an existing product by name, unit, and category.
-   *
-   * @param name The product name
-   * @param unit The product unit
-   * @param category The product category
-   * @return Optional containing the product if found
-   */
-  private Optional<Product> findExistingProduct(String name, String unit, Category category) {
-    return productRepository.findByNameAndUnitAndCategoryId(name, unit, category.getId());
-  }
-
   private int getTotalItemCount(String categoryUrl) throws IOException {
     String url = BASE_URL + categoryUrl;
-    log.debug("Finding total item count from: {}", url);
+    LOG.debug("Finding total item count from: {}", url);
     Document doc = Jsoup.connect(url).userAgent(USER_AGENT).timeout(10000).get();
     Element countElement = doc.selectFirst(SELECTOR_TOTAL_COUNT);
     if (countElement == null) {
-      log.warn("Could not find total count selector! Assuming 0 items.");
+      LOG.warn("Could not find total count selector! Assuming 0 items.");
       return 0;
     }
     String countText = countElement.text().split(" ")[0];
     try {
       return Integer.parseInt(countText);
     } catch (NumberFormatException e) {
-      log.error("Could not parse total count: {}", countText);
+      LOG.error("Could not parse total count: {}", countText);
       return 0;
     }
   }
@@ -226,7 +214,7 @@ public class ScraperService {
         }
       }
     } catch (Exception e) {
-      log.error("Error parsing GTM brand for {}: {}", productName, e.getMessage());
+      LOG.error("Error parsing GTM brand for {}: {}", productName, e.getMessage());
     }
     return "N/A";
   }
@@ -237,11 +225,11 @@ public class ScraperService {
    */
   private PriceUnit parsePriceAndUnit(String priceString) {
     if (priceString == null || priceString.isBlank()) {
-      log.warn("Price string is null or blank");
+      LOG.warn("Price string is null or blank");
       return new PriceUnit(BigDecimal.ZERO, "N/A");
     }
 
-    log.debug("Raw price string: '{}'", priceString);
+    LOG.debug("Raw price string: '{}'", priceString);
 
     Pattern pattern = Pattern.compile("(\\d+)\\s+(\\d{2})\\s*/([a-zżźćńółęąśA-ZŻŹĆŃÓŁĘĄŚ.]+)");
     Matcher matcher = pattern.matcher(priceString);
@@ -250,10 +238,10 @@ public class ScraperService {
       try {
         String priceValue = matcher.group(1) + "." + matcher.group(2);
         String unit = matcher.group(3).trim();
-        log.debug("Matched Biedronka format - Price: {}, Unit: {}", priceValue, unit);
+        LOG.debug("Matched Biedronka format - Price: {}, Unit: {}", priceValue, unit);
         return new PriceUnit(new BigDecimal(priceValue), unit);
       } catch (NumberFormatException e) {
-        log.error("Could not parse price using Biedronka format: {}", priceString, e);
+        LOG.error("Could not parse price using Biedronka format: {}", priceString, e);
       }
     }
 
@@ -262,14 +250,14 @@ public class ScraperService {
     if (fallbackMatcher.find()) {
       try {
         String priceValue = fallbackMatcher.group(1) + "." + fallbackMatcher.group(2);
-        log.debug("Matched fallback format - Price: {}, Unit: N/A", priceValue);
+        LOG.debug("Matched fallback format - Price: {}, Unit: N/A", priceValue);
         return new PriceUnit(new BigDecimal(priceValue), "N/A");
       } catch (NumberFormatException e) {
-        log.error("Could not parse price using fallback format: {}", priceString, e);
+        LOG.error("Could not parse price using fallback format: {}", priceString, e);
       }
     }
 
-    log.error("All patterns failed for price string: '{}'", priceString);
+    LOG.error("All patterns failed for price string: '{}'", priceString);
     return new PriceUnit(BigDecimal.ZERO, "N/A");
   }
 
