@@ -1,6 +1,7 @@
 package com.github.mpalambonisi.product.controller;
 
 import com.github.mpalambonisi.product.dto.ProductResponse;
+import com.github.mpalambonisi.product.model.Category;
 import com.github.mpalambonisi.product.model.Product;
 import com.github.mpalambonisi.product.service.ProductService;
 import java.util.List;
@@ -77,6 +78,7 @@ public class ProductController {
   }
 
   private ProductResponse toResponse(Product product) {
+    Category category = product.getCategory();
     return ProductResponse.builder()
         .id(product.getId())
         .name(product.getName())
@@ -84,8 +86,8 @@ public class ProductController {
         .unit(product.getUnit())
         .imageUrl(product.getImageUrl())
         .brand(product.getBrand())
-        .categoryId(product.getCategory().getId())
-        .categoryName(product.getCategory().getName())
+        .categoryId(category.getId())
+        .categoryName(category.getName())
         .createdAt(product.getCreatedAt())
         .updatedAt(product.getUpdatedAt())
         .build();
