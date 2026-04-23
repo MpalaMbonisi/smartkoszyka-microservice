@@ -40,8 +40,9 @@ public class ScraperService {
   private static final String USER_AGENT =
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
           + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36";
-  private static final Gson gson = new Gson();
+  private static final Gson GSON = new Gson();
   private static final int ITEMS_PER_PAGE = 32;
+  private static final String NOT_AVAILABLE_STRING = "N/A";
 
   /**
    * Constructs the scraper service.
@@ -109,7 +110,7 @@ public class ScraperService {
             Jsoup.connect(urlToScrape)
                 .header("X-Requested-With", "XMLHttpRequest")
                 .userAgent(USER_AGENT)
-                .timeout(15000)
+                .timeout(15_000)
                 .get();
 
         Elements productTiles = doc.select(SELECTOR_PRODUCT_TILE);
@@ -188,7 +189,7 @@ public class ScraperService {
   private int getTotalItemCount(String categoryUrl) throws IOException {
     String url = BASE_URL + categoryUrl;
     LOG.debug("Finding total item count from: {}", url);
-    Document doc = Jsoup.connect(url).userAgent(USER_AGENT).timeout(10000).get();
+    Document doc = Jsoup.connect(url).userAgent(USER_AGENT).timeout(10_000).get();
     Element countElement = doc.selectFirst(SELECTOR_TOTAL_COUNT);
     if (countElement == null) {
       LOG.warn("Could not find total count selector! Assuming 0 items.");
@@ -208,7 +209,7 @@ public class ScraperService {
       Element formElement = tile.selectFirst(SELECTOR_GTM_DATA);
       if (formElement != null) {
         String gtmDataString = formElement.attr("data-product-gtm");
-        JsonObject gtmJson = gson.fromJson(gtmDataString, JsonObject.class);
+        JsonObject gtmJson = GSON.fromJson(gtmDataString, JsonObject.class);
         if (gtmJson.has("item_brand")) {
           return gtmJson.get("item_brand").getAsString();
         }
@@ -216,7 +217,7 @@ public class ScraperService {
     } catch (Exception e) {
       LOG.error("Error parsing GTM brand for {}: {}", productName, e.getMessage());
     }
-    return "N/A";
+    return NOT_AVAILABLE_STRING;
   }
 
   /**
@@ -226,7 +227,7 @@ public class ScraperService {
   private PriceUnit parsePriceAndUnit(String priceString) {
     if (priceString == null || priceString.isBlank()) {
       LOG.warn("Price string is null or blank");
-      return new PriceUnit(BigDecimal.ZERO, "N/A");
+      return new PriceUnit(BigDecimal.ZERO, NOT_AVAILABLE_STRING);
     }
 
     LOG.debug("Raw price string: '{}'", priceString);
@@ -250,15 +251,16 @@ public class ScraperService {
     if (fallbackMatcher.find()) {
       try {
         String priceValue = fallbackMatcher.group(1) + "." + fallbackMatcher.group(2);
-        LOG.debug("Matched fallback format - Price: {}, Unit: N/A", priceValue);
-        return new PriceUnit(new BigDecimal(priceValue), "N/A");
+        LOG.debug(
+            "Matched fallback format - Price: {}, Unit: {}", priceValue, NOT_AVAILABLE_STRING);
+        return new PriceUnit(new BigDecimal(priceValue), NOT_AVAILABLE_STRING);
       } catch (NumberFormatException e) {
         LOG.error("Could not parse price using fallback format: {}", priceString, e);
       }
     }
 
     LOG.error("All patterns failed for price string: '{}'", priceString);
-    return new PriceUnit(BigDecimal.ZERO, "N/A");
+    return new PriceUnit(BigDecimal.ZERO, NOT_AVAILABLE_STRING);
   }
 
   private String makeAbsoluteUrl(String url) {
