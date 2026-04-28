@@ -1,4 +1,4 @@
-package com.github.mpalambonisi.api;
+package com.github.mpalambonisi.shoppinglist.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
