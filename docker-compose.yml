@@ -134,6 +134,8 @@ services:
         condition: service_healthy
       product-service:
         condition: service_healthy
+      shopping-list-service:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: prod
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
@@ -146,27 +148,33 @@ services:
       retries: 3
       start_period: 30s
 
-  # shopping-list-service:
-  #   image: smartkoszyka/shopping-list-service:latest
-  #   container_name: sk-shopping-list
-  #   restart: unless-stopped
-  #   build:
-  #     context: services/shopping-list-service
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8083:8083"
-  #     - "9083:9083"  # management port for Prometheus
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   environment:
-  #     SPRING_PROFILES_ACTIVE: prod
-  #     SPRING_DATASOURCE_URL:  jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
-  #     DB_USERNAME:            ${DB_USERNAME:-postgres}
-  #     DB_PASSWORD:            ${DB_PASSWORD}
-  #     JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
-  #   networks:
-  #     - sk-network
+  shopping-list-service:
+    image: smartkoszyka/shopping-list-service:latest
+    container_name: sk-shopping-list
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: services/shopping-list-service/Dockerfile
+    ports:
+      - "8083:8083"
+      - "9083:9083"  # management port for Prometheus
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL:  jdbc:postgresql://db:5432/${DB_NAME:-smartkoszyka}
+      DB_USERNAME:            ${DB_USERNAME:-postgres}
+      DB_PASSWORD:            ${DB_PASSWORD}
+      JWT_SECRET_KEY:         ${JWT_SECRET_KEY}
+    networks:
+      - sk-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9083/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 # ── Volumes ──
 volumes:
