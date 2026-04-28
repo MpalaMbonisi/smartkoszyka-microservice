@@ -25,6 +25,7 @@
     <module>services/auth-service</module>
     <module>services/product-service</module>
     <module>services/api-gateway</module>
+    <module>services/shopping-list-service</module>
   </modules>
   <!-- ─────────────────────────────────────────
          Global properties
@@ -260,10 +261,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

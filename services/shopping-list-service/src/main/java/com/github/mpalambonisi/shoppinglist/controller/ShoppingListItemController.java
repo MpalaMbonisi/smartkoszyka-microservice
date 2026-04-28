@@ -33,7 +33,6 @@ public class ShoppingListItemController {
    *
    * @param listId The ID of the shopping list
    * @param request The request containing product ID and quantity
-   * @param authentication The authenticated user
    * @return The created shopping list item
    */
   @PostMapping("/{listId}/items")
@@ -51,7 +50,6 @@ public class ShoppingListItemController {
    * Get all items in a shopping list.
    *
    * @param listId The ID of the shopping list
-   * @param authentication The authenticated user
    * @return List of items in the shopping list
    */
   @GetMapping("/{listId}/items")
@@ -71,7 +69,6 @@ public class ShoppingListItemController {
    *
    * @param itemId The ID of the item
    * @param request The request containing the new quantity
-   * @param authentication The authenticated user
    * @return The updated item
    */
   @PutMapping("/items/{itemId}/quantity")
@@ -87,7 +84,6 @@ public class ShoppingListItemController {
    * Toggle the checked status of an item.
    *
    * @param itemId The ID of the item
-   * @param authentication The authenticated user
    * @return No content response
    */
   @PutMapping("/items/{itemId}/toggle")
@@ -102,7 +98,6 @@ public class ShoppingListItemController {
    * Remove an item from a shopping list.
    *
    * @param itemId The ID of the item to remove
-   * @param authentication The authenticated user
    * @return No content response
    */
   @DeleteMapping("/items/{itemId}")

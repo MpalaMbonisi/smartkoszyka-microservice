@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
+/** Entry point for the shopping-list-service. */
 @SpringBootApplication
 @ComponentScan(
     basePackages = {"com.github.mpalambonisi.shoppinglist", "com.github.mpalambonisi.common"})
