@@ -41,6 +41,9 @@ jobs:
       - name: Make mvnw executable
         run: chmod +x mvnw
 
+      - name: Download dependencies
+        run: ./mvnw dependency:go-offline -B
+
       - name: Build and Test
         run: ./mvnw clean test -T 1C
 
